@@ -1,0 +1,111 @@
+Gruntfile (Gruntfile.js or Gruntfile.coffee)
+$ grunt --help
+
+Install Node.js and npm
+$ npm update -g npm
+$ npm install -g grunt-cli
+
+Each time grunt is run, it looks for a locally installed Grunt using node's require() system. Because of this, you can run grunt from any subfolder in your project. If a locally installed Grunt is found, the Grunt CLI loads the local installation of the Grunt library, applies the configuration from your Gruntfile, and executes any tasks you've requested for it to run.
+
+Working with an existing Grunt project:
+$ cd project_root_dir
+$ npm install
+$ grunt task:target
+
+Preparing a new Grunt project:
+package.json - project metadata, list grunt and the Grunt plugins your project needs as devDependencies
+Ways to create a package.json file for your project:
+- Most grunt-init templates will automatically create a project-specific package.json file.
+- The npm init command will create a basic package.json file.
+
+Installing Grunt and gruntplugins:
+$ npm install grunt@VERSION --save-dev
+$ npm install gruntPlugin --save-dev
+
+
+module.exports = function(grunt) {
+
+	// PROJECT AND TASKS CONFIGURATION.....
+	grunt.initConfig({
+		pkg: grunt.file.readJSON('package.json'),
+		task_1: {
+			options: {
+				// Task-level options may go here, overriding task defaults
+				banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
+			},
+			target_1: {
+				options: {
+					// Target-level options may go here, overriding task-level options
+				},
+				src: 'src/<%= pkg.name %>.js',
+				dest: 'build/<%= pkg.name %>.min.js'
+			},
+			target_2: {
+				// Compact Format*
+				src: ['src/bb.js', 'src/bbb.js', 'src/c*.js', 'src/**/*.js'],
+				dest: 'dest/b.js',
+				// Files Object Format
+				files: {
+					'dest/a.js': ['src/aa.js', 'src/aaa.js', 'src/{a,c}*.js', '!src/foo.js', 'src/foo.js']
+				},
+				// Files Array Format*
+				files: [
+					{src: ['src/aa.js', 'src/aaa.js'], dest: 'dest/a.js', filter: 'isFile', nonull: true}
+				],
+				// Older Formats
+				'dest/a.js': ['src/aa.js', 'src/aaa.js']
+			},
+			// Building the files object dynamically
+			target_with_dynamic_mappings: {
+				files: [
+					{
+						expand: true,     // Enable dynamic expansion.
+						cwd: 'lib/',      // Src matches are relative to this path.
+						src: ['**/*.js'], // Actual pattern(s) to match.
+						dest: 'build/',   // Destination path prefix.
+						ext: '.min.js',   // Dest filepaths will have this extension.
+						extDot: 'first'   // Extensions in filenames begin after the first dot
+					},
+				],
+			}
+			// Globbing patterns
+			// https://github.com/isaacs/node-glob, https://github.com/isaacs/minimatch
+		},
+		// Arbitrary non-task-specific properties, can be referred to in the config object
+		my_property: 'whatever data type'
+	});
+	
+	// LOAD THE PLUGIN THAT PROVIDES THE "task_1" TASK.....
+	grunt.loadNpmTasks('grunt-contrib-task_1');
+	
+	// REGISTER AN "ALIAS TASK" OR A TASK FUNCTION.....
+	// Default task(s) - "grunt" or "grunt default"
+	grunt.registerTask('default', ['task_1', 'task_1:target_2']);
+	// Another very basic default task
+	grunt.registerTask('default', 'Log some stuff.', function() {
+		grunt.log.write('Logging some stuff...' + this.name + ': ' + this.target + ': ' + this.data).ok();
+		// Enqueue "bar" and "baz" tasks, to run after "default" finishes, in-order.
+		grunt.task.run('bar', 'baz');
+		grunt.task.run(['bar', 'baz']);
+		
+		// Tasks can be asynchronous
+		var done = this.async();
+		grunt.log.writeln('Processing task...');
+		// And some async stuff
+		setTimeout(function() {
+			grunt.log.writeln('All done!');
+			done([false]);
+		}, 1000);
+		
+		// Fail by returning false if this task had errors
+		if (ifErrors) { return false; }
+
+		// Fail this task if "foo" task failed or never ran
+		grunt.task.requires('foo');
+		// Fail task if "meta.name" config property is missing
+		grunt.config.requires('meta.name');	// OR
+		grunt.config.requires(['meta', 'name']);
+	});
+	
+}
+
